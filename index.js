@@ -24,7 +24,9 @@ const client = new MongoClient(uri, {
 async function run() {
    try {
       const database = client.db("bistroDB");
+      const usersCollection = database.collection("users");
       const menuCollection = database.collection("menu");
+      const cartCollection = database.collection("carts");
       // query for movies that have a runtime less than 15 minutes
       app.get("/menu", async (req, res) => {
          const result = await menuCollection.find({}).toArray();
@@ -46,6 +48,29 @@ async function run() {
                result.push(menu.category);
             }
          });
+         res.send(result);
+      });
+
+      app.get("/carts", async (req, res) => {
+         const email = req.params.email;
+         const result = await cartCollection.find({ email: email }).toArray();
+         res.send(result);
+      });
+
+      app.post("/users", async (req, res) => {
+         const user = req.body;
+         const query = { email: user.email };
+         const existUser = await usersCollection.findOne(query);
+         if (existUser) return;
+
+         const result = await usersCollection.insertOne(user);
+
+         res.send(result);
+      });
+
+      app.post("/carts", async (req, res) => {
+         const cart = req.body;
+         const result = await cartCollection.insertOne(cart);
          res.send(result);
       });
       // Connect the client to the server	(optional starting in v4.7)
